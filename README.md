@@ -27,12 +27,12 @@ Sequence-to-Sequence - G2P, P2G or P2P
 │
 ├───results
 │   └───pytorch
-│       ├───g2p 								### training mode
-│       │   └───3								### sequence length
-│       │       └───2019-06-20-13-12-17			### execution date 
-│       │               experiment.log			### Experiment infos (data, model configuration, experiment configuration)
-│       │               results.log				### Logging during training (loss, PER, test translations)
-│       │               g2p_3.pth				### Model stored (<mode>_<seq_len>.pth
+│       ├───g2p 					### training mode
+│       │   └───3					### sequence length
+│       │       └───2019-06-20-13-12-17	### execution date 
+│       │               experiment.log		### Experiment infos (data, model configuration, experiment configuration)
+│       │               results.log			### Logging during training (loss, PER, test translations)
+│       │               g2p_3.pth			### Model stored (<mode>_<seq_len>.pth
 │       │ 
 ```
 
