@@ -1,4 +1,12 @@
 # -*- coding: utf-8 -*-
+
+"""
+Implementation is based on this tutorial:
+
+How to build a Grapheme-to-Phoneme (G2P) model using PyTorch:
+https://fehiepsi.github.io/blog/grapheme-to-phoneme/
+
+"""
 import datetime
 
 import Levenshtein
