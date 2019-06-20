@@ -28,18 +28,9 @@ import sys
 
 VALID_MODE = ["p2p", "g2p", "p2g"]
 
-from os.path import dirname, join
-
-PROJECT_ROOT = dirname(dirname(__file__))
-
-
-def get_full_path(*path):
-    return join(PROJECT_ROOT, *path)
-
-DATA_DIR = get_full_path("data")
-DATA_DIR_PREPRO = get_full_path("data", "preprocessed")
-WIKI_DIR = get_full_path("data", "wiki")
-
+DATA_DIR = os.path.abspath("data")
+DATA_DIR_PREPRO = os.path.join(DATA_DIR, "preprocessed")
+WIKI_DIR = os.path.join(DATA_DIR,  "wiki")
 
 
 
@@ -53,7 +44,7 @@ def check_permissions(start_dir):
 
 def permission_checker(dir):
     if sys.platform == "Windows" or sys.platform.lower().startswith("win"):
-        os.chmod(get_full_path(dir), stat.S_IWRITE)  ### Windows problems on directory rights
+        os.chmod(os.path.abspath(dir), stat.S_IWRITE)  ### Windows problems on directory rights
     else:
         check_permissions(".")
 
@@ -95,7 +86,7 @@ CONFIG = {
     'seed': 5,  # initial seed
     'intermediate_path': 'results',  # path to save models
     'train_samples': 50000,
-    'val_samples': 5000,
+    'val_samples': 10000,
     'test_samples': 2000
 }
 

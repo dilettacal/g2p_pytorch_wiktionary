@@ -27,13 +27,11 @@ import random
 import os
 import pandas as pd
 
-from pytorch_main import get_full_path
-
 random.seed(a=5, version=2)
 
 ##### DIRECTORIES ######
 
-DATA_DIR = get_full_path("data")
+DATA_DIR = os.path.abspath("data")
 WIKI = os.path.join(DATA_DIR, "wiki")
 PREPROCESSED_FILE_DIR = os.path.join(DATA_DIR, "preprocessed")
 

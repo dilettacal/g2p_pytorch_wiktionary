@@ -20,7 +20,6 @@ import argparse
 import os
 import time
 
-from pytorch_main import get_full_path
 
 VALID_MODE = ["g2p", "p2g", "p2p"]
 
