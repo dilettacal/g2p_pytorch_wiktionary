@@ -11,13 +11,9 @@ Sequence-to-Sequence - G2P, P2G or P2P
 │   pytorch_main.py                 ### Trains the model
 │   README.md
 ├───data                            ### Toy datasets
-│   │   g2p_toy_wiki_de-de_1.csv
 │   │   g2p_toy_wiki_de-de_3.csv
-│   │   p2g_toy_wiki_de-de_1.csv
 │   │   p2g_toy_wiki_de-de_3.csv
-│   │   p2p_toy_wiki_de-de_1.csv
 │   │   p2p_toy_wiki_de-de_3.csv
-│   │   p2p_toy_wiki_de-de_5.csv
 │   │
 │   ├───preprocessed                ### Preprocessed wiktionary dump file
 │   │       wiki_corpus_de.csv
