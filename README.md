@@ -102,7 +102,7 @@ Target: uɛs ɡʁosbʏʁɡɐlɪçm ʁepʁivatiziɐtn
 
 ### TODO
 - Model: Setup the model to be multilayered or to work bidirectionally
-- 
+- Training: Try with more parameters
 
-# SOURCES
+### SOURCES
 Tutorial: https://fehiepsi.github.io/blog/grapheme-to-phoneme/
