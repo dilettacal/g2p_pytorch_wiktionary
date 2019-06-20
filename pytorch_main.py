@@ -75,10 +75,10 @@ CONFIG = {
     'valid_data': 'val.tsv',
     'test_data': 'test.tsv',
     'max_len': 30,  # max length of grapheme/phoneme sequences - used to unroll the decoder
-    'beam_size': 5,  # size of beam for beam-search
+    'beam_size': 3,  # size of beam for beam-search
     'attention': True,  # use attention or not
     'log_every': 100,  # number of iterations to log and validate training
-    'lr_decay': 0.25,  # decay lr when not observing improvement in val_loss
+    'lr_decay':  0.5,  # decay lr when not observing improvement in val_loss
     'lr_min': 1e-5,  # stop when lr is too low
     'n_bad_loss': 5,  # number of bad val_loss before decaying
     'clip': 2.3,  # clip gradient, to avoid exploding gradient
@@ -86,7 +86,7 @@ CONFIG = {
     'seed': 5,  # initial seed
     'intermediate_path': 'results',  # path to save models
     'train_samples': 50000,
-    'val_samples': 10000,
+    'val_samples': 2000,
     'test_samples': 2000
 }
 
@@ -383,7 +383,8 @@ class TSVDataset(torchtext.data.Dataset):
         for inp, trg in data_lines:
             self.examples.append(data.Example.fromlist([inp, trg], fields))
 
-        self.sort_key = lambda x: (len(x.src), len(x.target))
+       # self.sort_key = lambda x: (len(x.src), len(x.target))
+        self.sort_key = lambda x: (len(x.src))
 
         super(TSVDataset, self).__init__(examples=self.examples, fields=fields)
 
