@@ -23,11 +23,11 @@ import time
 import mwxml
 from mwxml import Page
 
-from project import get_full_path
-
 import random
 import os
 import pandas as pd
+
+from pytorch_main import get_full_path
 
 random.seed(a=5, version=2)
 

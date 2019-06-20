@@ -18,10 +18,6 @@ Repo: https://github.com/mediawiki-utilities/python-mwxml
 """
 import argparse
 import os
-import pickle
-import re
-import stat
-import pandas as pd
 import time
 
 from pytorch_main import get_full_path

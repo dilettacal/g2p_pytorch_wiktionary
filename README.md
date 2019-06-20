@@ -7,8 +7,7 @@ Sequence-to-Sequence - G2P, P2G or P2P
 ## Project structure
 ```
 │   create_toy_dataset.py           ### Creates toy datasets
-│   de_wiktionary_main.py           ### Parses wiktioanry xml file
-│   general_settings.py             ### Include some general settings
+│   de_wiktionary_main.py           ### Parses wiktioanry xml file        
 │   pytorch_main.py                 ### Trains the model
 │   README.md
 ├───data                            ### Toy datasets
@@ -36,6 +35,15 @@ Sequence-to-Sequence - G2P, P2G or P2P
 │       │               g2p_3.pth				### Model stored (<mode>_<seq_len>.pth
 │       │ 
 ```
+
+## Required packages
+- PyTorch
+- Torchtext
+- Levenshtein
+- pandas
+- numpy
+- mwxml (Wiktionary parser)
+
 
 ## Data
 
