@@ -74,7 +74,7 @@ CONFIG = {
     'train_data': 'train.tsv',
     'valid_data': 'val.tsv',
     'test_data': 'test.tsv',
-    'max_len': 25,  # max length of grapheme/phoneme sequences - used to unroll the decoder
+    'max_len': 35,  # max length of grapheme/phoneme sequences - used to unroll the decoder
     'beam_size': 5,  # size of beam for beam-search
     'attention': True,  # use attention or not
     'log_every': 100,  # number of iterations to log and validate training
@@ -87,7 +87,7 @@ CONFIG = {
     'intermediate_path': 'results',  # path to save models
     'train_samples': 30000,
     'val_samples': 2000,
-    'test_samples': 2000
+    'test_samples': 1000
 }
 
 
@@ -632,12 +632,12 @@ def main():
     #### Iterators ###
 
     train_iter = data.BucketIterator(train_data, batch_size=cli_config.bs,
-                                     repeat=False, device=device) #creates buckets
+                                     repeat=False, device=device, sort_key=lambda x: (len(x.input), len(x.target))) #creates buckets
     ### Iterator class if batch size == 1
     val_iter = data.Iterator(val_data, batch_size=1,
-                             train=False, sort=False, device=device)
+                             train=False, sort=False, device=device, sort_key=lambda x: (len(x.input), len(x.target)))
     test_iter = data.Iterator(test_data, batch_size=1,
-                              train=False, device=device, sort=True, sort_key=lambda x: len(x.input))
+                              train=False, device=device, sort=True, sort_key=lambda  x: (len(x.input), len(x.target)))
 
 
     fixed_config = fixed_config
@@ -660,7 +660,7 @@ def main():
     experiment_logger = Logger(path=logger_path, file_name="experiment.log")
     results_logger = Logger(path=logger_path, file_name="results.log")
 
-    experiment_logger.log("Type: {}".format(TRAIN_MODE))
+   # experiment_logger.log("Type: {}".format(TRAIN_MODE))
 
     ###### Model creation #####
 
@@ -679,14 +679,14 @@ def main():
     experiment_logger.log("Train samples: {}".format(len(train_data)))
     experiment_logger.log("Validation samples: {}".format(len(val_data)))
     experiment_logger.log("Test samples: {}".format(len(test_data)))
-
-    experiment_logger.log("\nModel overview: {}\n".format(model))
+    experiment_logger.log("Model overview: \n{}".format(model))
 
     criterion = nn.NLLLoss()
     if fixed_config.cuda:
         model.cuda()
         criterion.cuda()
-    optimizer = optim.Adam(model.parameters(), lr=LR)  # use Adagrad
+    #optimizer = optim.Adam(model.parameters(), lr=LR)  # use Adagrad
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=LR)
 
     if True:
         for epoch in range(1, epochs+1):
