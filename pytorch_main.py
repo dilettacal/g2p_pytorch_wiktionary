@@ -79,14 +79,14 @@ CONFIG = {
     'attention': True,  # use attention or not
     'log_every': 100,  # number of iterations to log and validate training
     'lr_decay':  0.5,  # decay lr when not observing improvement in val_loss
-    'lr_min': 1e-5,  # stop when lr is too low
-    'n_bad_loss': 5,  # number of bad val_loss before decaying
+    'lr_min': 1e-6,  # stop when lr is too low
+    'n_bad_loss': 10,  # number of bad val_loss before decaying
     'clip': 2.3,  # clip gradient, to avoid exploding gradient
     'cuda': True,  # using gpu or not
     'seed': 5,  # initial seed
     'intermediate_path': 'results',  # path to save models
     'train_samples': 30000,
-    'val_samples': 2000,
+    'val_samples': 1000,
     'test_samples': 1000
 }
 
