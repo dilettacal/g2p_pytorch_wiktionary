@@ -74,8 +74,8 @@ CONFIG = {
     'train_data': 'train.tsv',
     'valid_data': 'val.tsv',
     'test_data': 'test.tsv',
-    'max_len': 30,  # max length of grapheme/phoneme sequences - used to unroll the decoder
-    'beam_size': 3,  # size of beam for beam-search
+    'max_len': 25,  # max length of grapheme/phoneme sequences - used to unroll the decoder
+    'beam_size': 5,  # size of beam for beam-search
     'attention': True,  # use attention or not
     'log_every': 100,  # number of iterations to log and validate training
     'lr_decay':  0.5,  # decay lr when not observing improvement in val_loss
@@ -85,7 +85,7 @@ CONFIG = {
     'cuda': True,  # using gpu or not
     'seed': 5,  # initial seed
     'intermediate_path': 'results',  # path to save models
-    'train_samples': 50000,
+    'train_samples': 30000,
     'val_samples': 2000,
     'test_samples': 2000
 }
@@ -393,11 +393,11 @@ class TSVDataset(torchtext.data.Dataset):
 
     @classmethod
     def splits(cls, path, src_field, trg_field, root='',
-               seed=None, revese_comb=False, fractions=[], **kwargs):
+               seed=5, revese_comb=False, fractions=[], **kwargs):
         if seed:
             random.seed(seed)
         df = pd.read_csv(path, encoding="utf-8", sep="\t")
-        print(len(df))
+        print("Total number of samples:", len(df))
 
         if revese_comb:
             ### this is used in case the model is trained for g2p or p2g task
@@ -412,7 +412,7 @@ class TSVDataset(torchtext.data.Dataset):
             fractions = np.array([0.6, 0.2, 0.2])
 
         # shuffle your input
-        df_to_split = df.sample(frac=1)
+        df_to_split = df.sample(frac=1, random_state=seed)
 
         # split into 3 parts
         train, val, test = np.array_split(df_to_split, (fractions[:-1].cumsum() * len(df_to_split)).astype(int))
