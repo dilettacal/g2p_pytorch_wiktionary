@@ -76,7 +76,7 @@ CONFIG = {
     'test_data': 'test.tsv',
     'max_len': 35,  # max length of grapheme/phoneme sequences - used to unroll the decoder
     'beam_size': 5,  # size of beam for beam-search
-    'attention': True,  # use attention or not
+    'attention': False,  # use attention or not
     'log_every': 100,  # number of iterations to log and validate training
     'lr_decay':  0.5,  # decay lr when not observing improvement in val_loss
     'lr_min': 1e-6,  # stop when lr is too low
@@ -85,9 +85,9 @@ CONFIG = {
     'cuda': True,  # using gpu or not
     'seed': 5,  # initial seed
     'intermediate_path': 'results',  # path to save models
-    'train_samples': 50000,
-    'val_samples': 5000,
-    'test_samples': 1000
+    'train_samples': 5000,
+    'val_samples': 500,
+    'test_samples': 100
 }
 
 
@@ -103,16 +103,17 @@ def get_args_parser():
 
     parser = argparse.ArgumentParser(description='P2G or G2P')
     ### Hidden size ####
-    parser.add_argument('--emb', type=int, default=500, help='Mode: P2P, P2G, G2P, G2G available')
+    parser.add_argument('--emb', type=int, default=128, help='Mode: P2P, P2G, G2P, G2G available')
 
     parser.add_argument('--hid', type=int, default=500, help="hidden size")
 
     parser.add_argument('--epochs', type=int, default=10,
                         help="Epochs")
 
-    parser.add_argument('--bs', type=int, default=100, help="Batch size")
+    parser.add_argument('--bs', type=int, default=10, help="Batch size")
+    parser.add_argument('--att', type=bool, default=True, help="Use attention or not. Default: Run with attention")
     parser.add_argument('--lr', type=float, default=0.07, help="Learning rate")
-    parser.add_argument('--file', type=str, default="p2p_toy_wiki_de-de_3.csv")
+    parser.add_argument('--file', type=str, default="p2p_toy_wiki_de-de_2.csv")
 
     parser.add_argument('--mode', type=str, default="p2p")
 
@@ -173,14 +174,8 @@ class Attention(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, vocab_size, d_embed, d_hidden):
         super(Decoder, self).__init__()
-
-        if vocab_size < d_embed:
-            self.embedding = nn.Embedding(vocab_size, vocab_size, padding_idx=1)
-            self.embedding.weight.data = torch.eye(vocab_size)
-            self.lstm = nn.LSTMCell(vocab_size, d_hidden)
-        else:
-            self.embedding = nn.Embedding(vocab_size, d_embed, padding_idx=1)
-            self.lstm = nn.LSTMCell(d_embed, d_hidden)
+        self.embedding = nn.Embedding(vocab_size, d_embed, padding_idx=1)
+        self.lstm = nn.LSTMCell(d_embed, d_hidden)
         self.attn = Attention(d_hidden)
         self.linear = nn.Linear(d_hidden, vocab_size)
 
@@ -216,6 +211,7 @@ class Model(nn.Module):
             return self._generate(h, c, context)
 
     def _generate(self, h, c, context):
+        print("Predicting using beam search")
         beam = Beam(self.config.beam_size, cuda=self.config.cuda)
         # Make a beam_size batch.
         h = h.expand(beam.size, h.size(1))
@@ -450,7 +446,7 @@ def train(config, train_iter,val_iter, model, criterion, optimizer, epoch, logge
 
         output, _, __ = model(batch.input, batch.target[:-1].detach())
         target = batch.target[1:]
-        loss = criterion(output.view(output.size(0) * output.size(1), -1),
+        loss = criterion(output.view(output.size(0) * output.size(1), -1) + EPSILON,
                          target.view(target.size(0) * target.size(1)))
 
         optimizer.zero_grad()
@@ -545,11 +541,14 @@ class Logger():
             raise Exception('path does not exist')
 
     def log(self, info, stdout=True):
-        with open(os.path.join(self.path, self.file_name), self.mode) as f:
+        with open(os.path.join(self.path, self.file_name), self.mode, encoding="utf-8") as f:
             print(info, file=f)
         if stdout:
             print(info)
 
+
+global EPSILON
+EPSILON = 1e-6
 """
 MAIN METHOD TO RUN THE SCRIPT
 """
@@ -558,6 +557,9 @@ def main():
     fixed_config = argparse.Namespace(**CONFIG)
 
     cli_config = get_args_parser().parse_args()
+
+    ### Setup attention for the model, the model receives fixed_config
+    fixed_config.attention = cli_config.att
 
     TRAIN_MODE = cli_config.mode.lower()
     assert TRAIN_MODE in VALID_MODE, "Please select right training mode (p2p, p2g, g2p)"
@@ -654,7 +656,7 @@ def main():
     permission_checker(fixed_config.best_model)
     fixed_config.best_model = os.path.join(fixed_config.best_model, "{}_{}.pth".format(TRAIN_MODE, seq_len))
     LR = fixed_config.lr
-    print(LR)
+    #print(LR)
 
 
     experiment_logger = Logger(path=logger_path, file_name="experiment.log")
@@ -673,6 +675,7 @@ def main():
     experiment_logger.log("dec_emb_dim: {}".format(model.decoder.embedding.embedding_dim))
     experiment_logger.log("hid_dim: {}".format(hid_dim))
     experiment_logger.log("Optimizer: adam")
+    experiment_logger.log("Attention: {}".format(cli_config.att))
     experiment_logger.log("LR: {}".format(LR))
     experiment_logger.log("Batch size: {}".format(cli_config.bs))
     experiment_logger.log("Epochs: {}".format(cli_config.epochs))
@@ -681,7 +684,7 @@ def main():
     experiment_logger.log("Test samples: {}".format(len(test_data)))
     experiment_logger.log("Model overview: \n{}".format(model))
 
-    criterion = nn.NLLLoss()
+    criterion = nn.NLLLoss(ignore_index=1)
     if fixed_config.cuda:
         model.cuda()
         criterion.cuda()
