@@ -76,18 +76,18 @@ CONFIG = {
     'test_data': 'test.tsv',
     'max_len': 35,  # max length of grapheme/phoneme sequences - used to unroll the decoder
     'beam_size': 5,  # size of beam for beam-search
-    'attention': False,  # use attention or not
+    'attention': True,  # use attention or not
     'log_every': 100,  # number of iterations to log and validate training
     'lr_decay':  0.5,  # decay lr when not observing improvement in val_loss
     'lr_min': 1e-6,  # stop when lr is too low
-    'n_bad_loss': 10,  # number of bad val_loss before decaying
+    'n_bad_loss': 7,  # number of bad val_loss before decaying
     'clip': 2.3,  # clip gradient, to avoid exploding gradient
     'cuda': True,  # using gpu or not
     'seed': 5,  # initial seed
     'intermediate_path': 'results',  # path to save models
-    'train_samples': 20000,
+    'train_samples': 70000,
     'val_samples': 3000,
-    'test_samples': 1000
+    'test_samples': 9000
 }
 
 
@@ -103,16 +103,16 @@ def get_args_parser():
 
     parser = argparse.ArgumentParser(description='P2G or G2P')
     ### Hidden size ####
-    parser.add_argument('--emb', type=int, default=128, help='Mode: P2P, P2G, G2P, G2G available')
+    parser.add_argument('--emb', type=int, default=500, help='Mode: P2P, P2G, G2P, G2G available')
 
     parser.add_argument('--hid', type=int, default=500, help="hidden size")
 
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=20,
                         help="Epochs")
 
-    parser.add_argument('--bs', type=int, default=10, help="Batch size")
-    parser.add_argument('--att', type=bool, default=True, help="Use attention or not. Default: Run with attention")
-    parser.add_argument('--lr', type=float, default=0.07, help="Learning rate")
+    parser.add_argument('--bs', type=int, default=64, help="Batch size")
+   # parser.add_argument('--att', type=bool, default=True, help="Use attention or not. Default: Run with attention")
+    parser.add_argument('--lr', type=float, default=0.05, help="Learning rate")
     parser.add_argument('--file', type=str, default="p2p_toy_wiki_de-de_2.csv")
 
     parser.add_argument('--mode', type=str, default="p2p")
@@ -211,7 +211,6 @@ class Model(nn.Module):
             return self._generate(h, c, context)
 
     def _generate(self, h, c, context):
-        print("Predicting using beam search")
         beam = Beam(self.config.beam_size, cuda=self.config.cuda)
         # Make a beam_size batch.
         h = h.expand(beam.size, h.size(1))
@@ -559,7 +558,7 @@ def main():
     cli_config = get_args_parser().parse_args()
 
     ### Setup attention for the model, the model receives fixed_config
-    fixed_config.attention = cli_config.att
+    #fixed_config.attention = cli_config.att
 
     TRAIN_MODE = cli_config.mode.lower()
     assert TRAIN_MODE in VALID_MODE, "Please select right training mode (p2p, p2g, g2p)"
@@ -675,7 +674,7 @@ def main():
     experiment_logger.log("dec_emb_dim: {}".format(model.decoder.embedding.embedding_dim))
     experiment_logger.log("hid_dim: {}".format(hid_dim))
     experiment_logger.log("Optimizer: adam")
-    experiment_logger.log("Attention: {}".format(cli_config.att))
+  #  experiment_logger.log("Attention: {}".format(cli_config.att))
     experiment_logger.log("LR: {}".format(LR))
     experiment_logger.log("Batch size: {}".format(cli_config.bs))
     experiment_logger.log("Epochs: {}".format(cli_config.epochs))
