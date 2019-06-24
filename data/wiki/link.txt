@@ -1,12 +1,1 @@
-Wiktionary Dump can be downloaded at:
 https://dumps.wikimedia.org/dewiktionary/latest/dewiktionary-latest-pages-articles.xml.bz2
-
-Please put the dump file in the data/wiki/ directory
-
-
-Actual results:
-Total pages - all languages: 601290
-Total pages with 'German' language: 497265
-Total pages with 'None' revisions: 11
-
-Time taken: ca. 3 minutes

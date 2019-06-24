@@ -85,8 +85,8 @@ CONFIG = {
     'cuda': True,  # using gpu or not
     'seed': 5,  # initial seed
     'intermediate_path': 'results',  # path to save models
-    'train_samples': 30000,
-    'val_samples': 1000,
+    'train_samples': 50000,
+    'val_samples': 5000,
     'test_samples': 1000
 }
 
