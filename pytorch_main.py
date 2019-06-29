@@ -85,9 +85,10 @@ CONFIG = {
     'cuda': True,  # using gpu or not
     'seed': 5,  # initial seed
     'intermediate_path': 'results',  # path to save models
-    'train_samples': 70000,
+    'train_samples': 30000,
     'val_samples': 3000,
-    'test_samples': 9000
+    'test_samples': 3000,
+    'beam_logger':None
 }
 
 
@@ -103,17 +104,17 @@ def get_args_parser():
 
     parser = argparse.ArgumentParser(description='P2G or G2P')
     ### Hidden size ####
-    parser.add_argument('--emb', type=int, default=500, help='Mode: P2P, P2G, G2P, G2G available')
+    parser.add_argument('--emb', type=int, default=100, help='Mode: P2P, P2G, G2P, G2G available')
 
-    parser.add_argument('--hid', type=int, default=500, help="hidden size")
+    parser.add_argument('--hid', type=int, default=100, help="hidden size")
 
-    parser.add_argument('--epochs', type=int, default=20,
+    parser.add_argument('--epochs', type=int, default=1,
                         help="Epochs")
 
-    parser.add_argument('--bs', type=int, default=64, help="Batch size")
+    parser.add_argument('--bs', type=int, default=12, help="Batch size")
    # parser.add_argument('--att', type=bool, default=True, help="Use attention or not. Default: Run with attention")
     parser.add_argument('--lr', type=float, default=0.05, help="Learning rate")
-    parser.add_argument('--file', type=str, default="p2p_toy_wiki_de-de_2.csv")
+    parser.add_argument('--file', type=str, default="p2p_toy_wiki_de-de_3.csv")
 
     parser.add_argument('--mode', type=str, default="p2p")
 
@@ -200,6 +201,8 @@ class Model(nn.Module):
                                config.d_hidden)
         self.config = config
 
+        self.beam_logger = config.beam_logger
+
     def forward(self, input_seq, target_seq=None):
         o, h, c = self.encoder(input_seq, self.config.cuda)
         #context = o.t() if self.config.attention else None
@@ -218,8 +221,12 @@ class Model(nn.Module):
         context = context.expand(beam.size, context.size(1), context.size(2))
 
         for i in range(self.config.max_len):  # max_len = 20
+            self.beam_logger.log("Time step: {}".format(i))
             x = beam.get_current_state()
+            self.beam_logger.log("Current x: {}".format(x))
             o, h, c = self.decoder(Variable(x.unsqueeze(0)), h, c, context)
+            self.beam_logger.log("Output size: {}".format(o.size()))
+            self.beam_logger.log("Output squeezed: {}".format(o.data.squeeze(0).size()))
             if beam.advance(o.data.squeeze(0)):
                 break
             h.data.copy_(h.data.index_select(0, beam.get_current_origin()))
@@ -269,26 +276,31 @@ class Beam(object):
         """Get the backpointer to the beam at this step."""
         return self.prevKs[-1]
 
-    def advance(self, workd_lk):
+    def advance(self, workd_lk): #output from model, [seq_len, vocab_size]
         """Advance the beam."""
-        num_words = workd_lk.size(1)
+        num_words = workd_lk.size(1) #vocab_size
 
         # Sum the previous scores.
         if len(self.prevKs) > 0:
+            
             beam_lk = workd_lk + self.scores.unsqueeze(1).expand_as(workd_lk)
         else:
             beam_lk = workd_lk[0]
 
-        flat_beam_lk = beam_lk.view(-1)
+
+        flat_beam_lk = beam_lk.view(-1) #flatten
 
         bestScores, bestScoresId = flat_beam_lk.topk(self.size, 0,
-                                                     True, True)
+                                                     True, True) #the size lists of scores
         self.scores = bestScores
 
         # bestScoresId is flattened beam x word array, so calculate which
         # word and beam each score came from
+       
         prev_k = bestScoresId / num_words
+
         self.prevKs.append(prev_k)
+
         self.nextYs.append(bestScoresId - prev_k * num_words)
         # End condition is when top-of-beam is EOS.
         if self.nextYs[-1][0] == self.eos:
@@ -298,7 +310,6 @@ class Beam(object):
     def get_hyp(self, k):
         """Get hypotheses."""
         hyp = []
-        # print(len(self.prevKs), len(self.nextYs), len(self.attn))
         for j in range(len(self.prevKs) - 1, -1, -1):
             hyp.append(self.nextYs[j + 1][k])
             #defence for beamsearch error
@@ -496,7 +507,7 @@ def validate(val_iter, model, criterion):
     return val_loss / len(val_iter.dataset)
 
 
-def test(test_iter, model, logger):
+def test_model(test_iter, model, logger):
     logger.log("Testing the model on the test dataset. \nDataset length: {}".format(len(test_iter)))
     model.eval()
     test_per = 0
@@ -577,7 +588,7 @@ def main():
 
     #### Reading configuration from CLI #####
 
-    print(cli_config.file)
+   # print(cli_config.file)
 
     seq_len = int(cli_config.file.lower().split("_")[-1].split(".")[0])
     emb_dim = cli_config.emb
@@ -660,6 +671,9 @@ def main():
 
     experiment_logger = Logger(path=logger_path, file_name="experiment.log")
     results_logger = Logger(path=logger_path, file_name="results.log")
+    beam_logger = Logger(path=logger_path, file_name="beam.log")
+
+    fixed_config.beam_logger = beam_logger
 
    # experiment_logger.log("Type: {}".format(TRAIN_MODE))
 
@@ -701,7 +715,7 @@ def main():
     model.load_state_dict(torch.load(fixed_config.best_model))
 
     #### Test with PER computation
-    test(test_iter, model, experiment_logger)
+    test_model(test_iter, model, experiment_logger)
 
     #test_iter.init_epoch()
     ### Generating translations
