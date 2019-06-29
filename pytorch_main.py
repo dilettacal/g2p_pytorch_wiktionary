@@ -221,12 +221,12 @@ class Model(nn.Module):
         context = context.expand(beam.size, context.size(1), context.size(2))
 
         for i in range(self.config.max_len):  # max_len = 20
-            self.beam_logger.log("Time step: {}".format(i))
+            #self.beam_logger.log("Time step: {}".format(i))
             x = beam.get_current_state()
-            self.beam_logger.log("Current x: {}".format(x))
+           # self.beam_logger.log("Current x: {}".format(x))
             o, h, c = self.decoder(Variable(x.unsqueeze(0)), h, c, context)
-            self.beam_logger.log("Output size: {}".format(o.size()))
-            self.beam_logger.log("Output squeezed: {}".format(o.data.squeeze(0).size()))
+           # self.beam_logger.log("Output size: {}".format(o.size()))
+            #self.beam_logger.log("Output squeezed: {}".format(o.data.squeeze(0).size()))
             if beam.advance(o.data.squeeze(0)):
                 break
             h.data.copy_(h.data.index_select(0, beam.get_current_origin()))
